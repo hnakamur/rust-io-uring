@@ -26,14 +26,14 @@ async fn handle_connection(handle: Handle, c: tokio_uring_reactor::net::TcpStrea
 		let con = connection.take().expect("connection missing");
 		buf.resize_with(512, Default::default);
 
-		let (n, mut buf, con) = await!(con.read(&handle, buf).timeout(Duration::from_secs(3)))?;
+		let (n, mut buf, con) = con.read(&handle, buf).timeout(Duration::from_secs(3)).await?;
 		if n == 0 {
 			println!("Connection from {} closing", a);
 			return Ok(())
 		}
 		buf.truncate(n);
 		println!("Echoing: {:?}", buf);
-		let (_n, buf, con) = await!(con.write(&handle, buf))?;
+		let (_n, buf, con) = con.write(&handle, buf).await?;
 
 		// put values back for next round
 		storage = Some(buf);

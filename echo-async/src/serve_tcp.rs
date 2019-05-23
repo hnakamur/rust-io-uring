@@ -26,12 +26,12 @@ where
 	runtime.spawn(Compat::new(Box::pin(async move {
 		let handle_err = Rc::new(handle_err);
 
-		if let Err::<(), io::Error>(e) = await!(async {
+		if let Err::<(), io::Error>(e) = async {
 			let l = tokio_uring_reactor::net::TcpListener::from(l);
 			let mut i = l.incoming(&handle);
 
 			loop {
-				let (con, addr) = await!(i.try_next().timeout(Duration::from_secs(30)))?.unwrap();
+				let (con, addr) = i.try_next().timeout(Duration::from_secs(30)).await?.unwrap();
 				let ehandle = handle.clone();
 				let handle_err = handle_err.clone();
 				tokio_current_thread::spawn(Compat::new(Box::pin(
@@ -39,7 +39,7 @@ where
 					.or_else(move |e| handle_err(ehandle, e, addr).map(Ok))
 				)))
 			}
-		}) {
+		}.await {
 			eprintln!("Serve error: {}", e);
 		}
 
