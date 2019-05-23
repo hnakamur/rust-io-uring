@@ -1,6 +1,7 @@
 mod reactor;
 mod registration;
 mod unpark;
+pub mod file;
 pub mod io;
 pub mod net;
 

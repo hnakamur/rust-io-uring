@@ -54,3 +54,16 @@ impl<T: AsRawFd> AsRawFd for SplitWrite<T> {
 
 impl<T: SocketWrite> SocketWrite for SplitWrite<T> {
 }
+
+
+pub trait FileRead: AsRawFd + Sized {
+	fn read<T: AsMut<[u8]>>(self, handle: &Handle, buf: T) -> AsyncRead<T, Self> {
+		handle.async_read(self, 0, buf)
+	}
+}
+
+pub trait FileWrite: AsRawFd + Sized {
+	fn write<T: AsRef<[u8]>>(self, handle: &Handle, buf: T) -> AsyncWrite<T, Self> {
+		handle.async_write(self, 0, buf)
+	}
+}

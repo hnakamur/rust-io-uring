@@ -3,13 +3,16 @@
 pub mod timeout;
 pub mod serve_tcp;
 
+use std::fs;
 use std::io;
 use std::net;
 use std::time::Duration;
 use tokio_uring_reactor::{
+	file::File,
 	io::{
 		SocketRead,
 		SocketWrite,
+		FileWrite,
 	},
 	Handle,
 };
@@ -21,6 +24,7 @@ async fn handle_connection(handle: Handle, c: tokio_uring_reactor::net::TcpStrea
 	let mut storage: Option<Vec<u8>> = None;
 	let mut connection = Some(c);
 
+	let file = fs::OpenOptions::new().create(true).append(true).open("echo.log").expect("file");
 	loop {
 		let mut buf = storage.take().unwrap_or_default();
 		let con = connection.take().expect("connection missing");
@@ -33,6 +37,7 @@ async fn handle_connection(handle: Handle, c: tokio_uring_reactor::net::TcpStrea
 		}
 		buf.truncate(n);
 		println!("Echoing: {:?}", buf);
+		await!(File::from(file.try_clone()?).write(&handle, buf.clone()))?;
 		let (_n, buf, con) = await!(con.write(&handle, buf))?;
 
 		// put values back for next round
